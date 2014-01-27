@@ -33,6 +33,14 @@ function DataCtrl($scope) {
     }
   ];
 
+
+  $scope.$on('LOAD', function() {
+      $scope.loading = true;
+  });
+  $scope.$on('DONE', function() {
+      $scope.loading = false;
+  });
+
   /* Call initalization function when the page is loaded*/
   google.setOnLoadCallback(init);
 
@@ -40,7 +48,9 @@ function DataCtrl($scope) {
 
   /* Initialize Earth */
   function init() {
+    $scope.$emit('LOAD');
     google.earth.createInstance('map3d', initCB, failureCB);
+    $scope.$emit('DONE');
   }
 
   /* Success callback */
