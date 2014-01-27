@@ -20,8 +20,11 @@ function initCB(instance) {
   // ge.getLayerRoot().enableLayerById(ge.LAYER_BORDERS, true);
   // ge.getLayerRoot().enableLayerById(ge.LAYER_ROADS, true);
 
-  // create the placemark
-  createPlacemark(37, -122);
+  // create the glacier #1
+  createPlacemark('Glacier #1', 37, -122);
+
+  // create the glacier #2
+  createPlacemark('Glacier #2', 38, -123);
 
   // look at the placemark we created
   var la = ge.createLookAt('');
@@ -30,7 +33,7 @@ function initCB(instance) {
     ge.ALTITUDE_RELATIVE_TO_GROUND,
     0, // heading
     0, // straight-down tilt
-    5000 // range (inverse of zoom)
+    400000 // range (inverse of zoom)
     );
   ge.getView().setAbstractView(la);
 
@@ -47,7 +50,7 @@ function failureCB(errorCode) {
 google.setOnLoadCallback(init);
 
 
-function createPlacemark(lat, lng) { 
+function createPlacemark(glacierName, lat, lng) { 
   // Create point
   var la = ge.getView().copyAsLookAt(ge.ALTITUDE_RELATIVE_TO_GROUND);
   var point = ge.createPoint('');
@@ -55,7 +58,7 @@ function createPlacemark(lat, lng) {
   point.setLongitude(lng);
 
   var placemark = ge.createPlacemark('');
-  placemark.setName("Glacier #1");
+  placemark.setName(glacierName);
   placemark.setDescription('<a href="https://catalyst.uw.edu/workspace/omni/42527/302765"></a>' + '<br>' + 'The latitude is: ' + lat + '<br>' + 'The longtitude is: ' + lng);
   ge.getFeatures().appendChild(placemark);
 
