@@ -4,34 +4,43 @@ function DataCtrl($scope) {
     {
       name: "Glacier #1",
       lat: 37,
-      lng: -122
+      lng: -122,
+      rows: [['Mushrooms', 3],['Onions', 1],['Olives', 1],['Zucchini', 1], ['Pepperoni', 2]]
     },
     {
       name: "Glacier #2",
       lat: 38,
-      lng: -123
+      lng: -123,
+      rows: [['Mushrooms', 1],['Onions', 7],['Olives', 2],['Zucchini', 3], ['Pepperoni', 5]]
     },
     {
       name: "Glacier #3",
       lat: 39,
-      lng: -124
+      lng: -124,
+      rows: [['Mushrooms', 20],['Onions', 40],['Olives', 60],['Zucchini', 10], ['Pepperoni', 8]]
     },
     {
       name: "Glacier #4",
       lat: 40,
-      lng: -125
+      lng: -125,
+      rows: [['Mushrooms', 321],['Onions', 217],['Olives', 21],['Zucchini', 311], ['Pepperoni', 200]]
     },    
     {
       name: "Seattle",
       lat: 47.60621,
-      lng: -122.332071
+      lng: -122.332071,
+      rows: [['Mushrooms', 19],['Onions', 71],['Olives', 27],['Zucchini', 32], ['Pepperoni', 56]]      
     },
     {
       name: "UW",
       lat: 47.655335,
-      lng: -122.303519
+      lng: -122.303519,
+      rows: [['Mushrooms', 100],['Onions', 200],['Olives', 400],['Zucchini', 400], ['Pepperoni', 500]]
     }
   ];
+
+
+  // EARTH //
 
   /* Call initalization function when the page is loaded*/
   google.setOnLoadCallback(init);
@@ -101,4 +110,26 @@ function DataCtrl($scope) {
       );
     ge.getView().setAbstractView(la);    
   }
+
+
+  // CIRCLE //
+
+  // Set a callback to run when the Google Visualization API is loaded.
+  $scope.getCircle = function(lat, lng, rows) {
+    // Create the data table.
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Topping');
+    data.addColumn('number', 'Slices');
+    data.addRows(rows);
+
+    // Set chart options
+    var options = {'title':'How Much Pizza I Ate Last Night',
+                   'width':400,
+                   'height':300};
+
+    // Instantiate and draw our chart, passing in some options.
+    var chart = new google.visualization.PieChart(document.getElementById('chart_div'));
+    chart.draw(data, options);
+  }
+
 }
