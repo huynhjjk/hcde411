@@ -1,72 +1,547 @@
-
 <!DOCTYPE html>
-<html lang="en" ng-app="Glaciers">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <link rel="shortcut icon" href="lib/bootstrap-3.0.0/docs-assets/ico/favicon.png">
-
-    <title>HCDE 411 Project</title>
-
-    <!-- Bootstrap core CSS -->
-    <link href="lib/bootstrap-3.0.0/dist/css/bootstrap.css" rel="stylesheet">
-
-    <!-- Custom styles for this template -->
-    <link href="css/styles.css" rel="stylesheet">
-
-    <!-- Just for debugging purposes. Don't actually copy this line! -->
-    <!--[if lt IE 9]><script src="lib/bootstrap-3.0.0/docs-assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
-
-    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
+<html lang="en" ng-app="HCDE411">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="">
+<meta name="author" content="">
+<link rel="shortcut icon" href="img/favicon.ico">
+<title>HCDE 411 Project</title>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+<!-- Custom styles for this template -->
+<link href="css/styles.css" rel="stylesheet">
+<style>
+  #map-canvas {
+    width: 100%;
+    height: 550px;
+  }
+</style>
+<style>
+    #scrollToTop:link, 
+    #scrollToTop:visited {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+</style>
+<style>
+	body {
+		min-height: 650px;
+	}
+    table {
+        table-layout:fixed;
+    }
+    .div-table-content {
+      height: 350px;
+      overflow-y:auto;
+    }
+	.form-inline .radio, .form-inline .checkbox {
+	padding: 3px 20px;
+	}
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script type="text/javascript" src="http://static.tumblr.com/ikeq9mi/DfYl6o46t/scrolltotop.min.js"></script>
+<a href="javascript:;" id="scrollToTop" rel="nofollow" title="Go to Top"><img src="http://static.tumblr.com/cqpvki8/7yWlh05zn/seta.png" title="Go to Top" alt="Go to Top"/></a>
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+<!-- Just for debugging purposes. Don't actually copy this line! -->
+<!--[if lt IE 9]><script src="lib/bootstrap-3.0.0/docs-assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+<!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
       <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
     <![endif]-->
-  </head>
-
-  <body>
-    <div class="container" ng-controller="DataCtrl">
+</head>
+<body ng-controller="DataCtrl">
+<div class="text-center" style="margin-top: 10%;" ng-show="loading">
+  <img ng-src="img/icon.png" class="load-icon" width=100 height=100 alt="Farmers Market Icon"/><br><br>
+  <h1>Loading Farmers Markets...</h1>
+  <img ng-src="img/ajax-loader.gif" class="load-icon" alt="loading..."/>
+</div>
+<div class="row">
+  <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6" style="padding-right: 0px;">
+    <div id="map-canvas" ng-hide="loading"></div>
+  </div>
+  <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6" style="padding-left: 0px;">
+    <div class="panel-default" ng-hide="loading">
+      <div class="panel-heading">
         <div class="row">
-            <div class="col-xs-12 col-sm-12 col-md-2 col-lg-2">
-                <h2 class="text-center">Zoom-In</h2>
-                <div ng-repeat="glacier in data">
-                    <button type="button" class="btn btn-primary btn-block btn-lg" ng-click="getView(glacier.lat, glacier.lng); getCircle(glacier.lat, glacier.lng, glacier.rows)">{{glacier.name}}</button>
-                </div>                
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
-                <div class="text-center"><span id="installed-plugin-version" style="font-weight: bold;">Loading... <br><img src="img/ajax-loader.gif" alt="loading..."/></span></div>
-				<div id="map3d"></div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
-                <h2 class="text-center">Glaciers on Earth</h2>
-                <p class="text-center">We may put interactive visuals here.</p>
-                <div id="chart_div" style="max-width: 100%;"></div>
-            </div>
+          <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+            <form class="form-inline" role="form">
+              <div class="form-group">
+                <input type="input" class="form-control" placeholder="Search by state" ng-model="search.State" typeahead="state.state for state in states | filter:$viewValue" typeahead-on-select="search.State;onSelect(search.State)">
+              </div>
+              <div class="btn-group" data-ng-class="{open: open1}" document-switch-off="open1">
+                <button class="btn btn-default" type="button" data-ng-click="open1=!open1">Filter by Food <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenu">
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Bakedgoods"/> Baked Goods </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Cheese"/> Cheese </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Crafts"/> Crafts </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Flowers"/> Flowers </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Eggs"/> Eggs </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Seafood"/> Seafood </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Herbs"/> Herbs </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Vegetables"/> Vegetables </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Honey"/> Honey </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Jams"/> Jams </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Maple"/> Maple </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Meat"/> Meat </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Nursery"/> Nursery </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Nuts"/> Nuts </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Plants"/> Plants </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Poultry"/> Poultry </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Prepared"/> Prepared </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Soap"/> Soap </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Trees"/> Trees </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchFood.Wine"/> Wine </label>
+                  </div>
+                  </li>
+                </ul>
+              </div>
+              <div class="btn-group" data-ng-class="{open: open2}" document-switch-off="open2">
+                <button class="btn btn-default" type="button" data-ng-click="open2=!open2">Filter by Payment <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenu">
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchPayment.SFMNP"/> Senior Farmers' Market Nutrition Program </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchPayment.SNAP"/> Supplemental Nutrition Assistance Program </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchPayment.WIC"/> Women, Infants, and Children </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchPayment.WICcash"/> Women, Infants, and Children Cash </label>
+                  </div>
+                  </li>
+                  <li>
+                  <div class="checkbox">
+                    <label>
+                    <input type="checkbox" ng-model="SearchPayment.Credit"/> Credit </label>
+                  </div>
+                  </li>
+                </ul>
+              </div>
+            </form>
+          </div>
         </div>
-    </div><!-- /.container -->
-    <!-- D3 -->
-    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-    
-    <!-- AngularJS -->
-    <script src="lib/angular-1.2.4/angular.min.js"></script>
-    <script src="js/app.js"></script>
+      </div>
+      <div class="panel-body">
+        <div class="row" ng-hide="loading">
+          <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+            <!-- Nav tabs -->
+            <ul class="nav nav-tabs">
+              <li><a href="#fm_list" data-toggle="tab"><b>Farmers Markets</b></a></li>
+              <li class="active"><a href="#bar_chart" data-toggle="tab"><b>Bar Chart</b></a></li>
+              <div class="text-right">
+                <h4><b>Results:</b> {{filtered.length}}</h4>
+              </div>
+            </ul>
 
-    <!-- Bootstrap core JavaScript
+            <!-- Tab panes -->
+            <div class="tab-content">
+              <div class="tab-pane" id="fm_list">
+                  <table class="table">
+                  <thead>
+                  <tr>
+                    <th>
+                      <a href="" ng-click="orderByField='MarketName'; reverseSort = !reverseSort">Market Name</a>
+                    </th>
+                    <th>
+                      <a href="" ng-click="orderByField='street'; reverseSort = !reverseSort">Street</a>
+                    </th>
+                    <th>
+                      <a href="" ng-click="orderByField='city'; reverseSort = !reverseSort">City</a>
+                    </th>
+                    <th>
+                      <a href="" ng-click="orderByField='State'; reverseSort = !reverseSort">State</a>
+                    </th>
+                    <th>
+                      <a href="" ng-click="orderByField='zip'; reverseSort = !reverseSort">Zip</a>
+                    </th>
+                  </tr>
+                  </thead>
+                  </table>
+                  <div class="div-table-content">
+                    <table class="table table-hover">
+                    <tbody>
+                    <tr ng-click="getDetails(farmer); setSelected(this)" class="{{selected}}" ng-repeat="farmer in filtered = (fmData | orderBy:orderByField:reverseSort | filter:search:strict | myFilter:SearchFood | myFilter:SearchPayment | filter:$viewValue)">
+                      <td>
+                         {{farmer.MarketName}}
+                      </td>
+                      <td>
+                         {{farmer.street}}
+                      </td>
+                      <td>
+                         {{farmer.city}}
+                      </td>
+                      <td>
+                         {{farmer.State}}
+                      </td>
+                      <td>
+                         {{farmer.zip}}
+                      </td>
+                    </tr>
+                    </tbody>
+                    </table>
+                  </div>
+              </div>
+              <div class="tab-pane active" id="bar_chart">
+                <div id="columnchart_values"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="panel-default" ng-show="details">
+  <div class="panel-heading">
+      <h3 class="text-center"><b>{{details.MarketName}}</b></h3>
+  </div>
+  <div class="panel-body">
+        <table class="table" ng-show="details.Season1Time || details.Season2Time || details.Season3Time || details.Season4Time">
+      <h4 class="text-center" ng-show="details.Season1Time && details.Season2Time && details.Season3Time && details.Season4Time && details.Bakedgoods && details.Cheese && details.Crafts && details.Flowers && details.Eggs && details.Seafood && details.Herbs && details.Vegetables && details.Honey && details.Jams && details.Maple && details.Meat && details.Nursery && details.Nuts && details.Plants && details.Poultry && details.Prepared && details.Soap && details.Trees && details.Wine && details.Credit && details.SFMNP && details.SNAP && details.WIC && details.WICcash">No content available</h4>
+        <h4 ng-show="details.Season1Time || details.Season2Time || details.Season3Time || details.Season4Time">Hours</h4>
+        <thead>
+        <tr>
+          <th ng-show="details.Season1Time">
+             Autumn
+          </th>
+          <th ng-show="details.Season2Time">
+             Winter
+          </th>
+          <th ng-show="details.Season3Time">
+             Spring
+          </th>
+          <th ng-show="details.Season4Time">
+             Summer
+          </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td ng-show="details.Season1Time">
+            {{details.Season1Time}}
+          </td>
+          <td ng-show="details.Season2Time">
+            {{details.Season2Time}}
+          </td>
+          <td ng-show="details.Season3Time">
+            {{details.Season3Time}}
+          </td>
+          <td ng-show="details.Season4Time">
+            {{details.Season4Time}}
+          </td>
+        </tr>
+        </tbody>
+        </table>
+        <table class="table" ng-show="details.Bakedgoods || details.Cheese || details.Crafts || details.Flowers || details.Eggs || details.Seafood || details.Herbs || details.Vegetables || details.Honey || details.Jams || details.Maple || details.Meat || details.Nursery || details.Nuts || details.Plants || details.Poultry || details.Prepared || details.Soap || details.Trees || details.Wine">
+        <h4 ng-show="details.Bakedgoods || details.Cheese || details.Crafts || details.Flowers || details.Eggs || details.Seafood || details.Herbs || details.Vegetables || details.Honey || details.Jams || details.Maple || details.Meat || details.Nursery || details.Nuts || details.Plants || details.Poultry || details.Prepared || details.Soap || details.Trees || details.Wine">Available Products</h4>
+        <thead>
+        <tr>
+          <th ng-show="details.Bakedgoods">
+             Baked Goods
+          </th>
+          <th ng-show="details.Cheese">
+             Cheese
+          </th>
+          <th ng-show="details.Crafts">
+             Crafts
+          </th>
+          <th ng-show="details.Flowers">
+             Flowers
+          </th>
+          <th ng-show="details.Eggs">
+             Eggs
+          </th>
+          <th ng-show="details.Seafood">
+             Seafood
+          </th>
+          <th ng-show="details.Herbs">
+             Herbs
+          </th>
+          <th ng-show="details.Vegetables">
+             Vegetables
+          </th>
+          <th ng-show="details.Honey">
+             Honey
+          </th>
+          <th ng-show="details.Jams">
+             Jams
+          </th>
+          <th ng-show="details.Maple">
+             Maple
+          </th>
+          <th ng-show="details.Meat">
+             Meat
+          </th>
+          <th ng-show="details.Nursery">
+             Nursery
+          </th>
+          <th ng-show="details.Nuts">
+             Nuts
+          </th>
+          <th ng-show="details.Plants">
+             Plants
+          </th>
+          <th ng-show="details.Poultry">
+             Poultry
+          </th>
+          <th ng-show="details.Prepared">
+             Prepared
+          </th>
+          <th ng-show="details.Soap">
+             Soap
+          </th>
+          <th ng-show="details.Trees">
+             Trees
+          </th>
+          <th ng-show="details.Wine">
+             Wine
+          </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td ng-show="details.Bakedgoods">
+            <img src="img/icons/162.png" title="Baked Goods" alt="Baked Goods">
+          </td>
+          <td ng-show="details.Cheese">
+            <img src="img/icons/57.png" title="Cheese" alt="Cheese">
+          </td>
+          <td ng-show="details.Crafts">
+            <img src="img/icons/124.png" title="Crafts" alt="Crafts">
+          </td>
+          <td ng-show="details.Flowers">
+            <img src="img/icons/flowers.png" title="Flowers" alt="Flowers">
+          </td>
+          <td ng-show="details.Eggs">
+            <img src="img/icons/59.png" title="Eggs" alt="Eggs">
+          </td>
+          <td ng-show="details.Seafood">
+            <img src="img/icons/145.png" title="Seafood" alt="Seafood">
+          </td>
+          <td ng-show="details.Herbs">
+            <img src="img/icons/55.png" title="Herbs" alt="Herbs">
+          </td>
+          <td ng-show="details.Vegetables">
+            <img src="img/icons/54.png" title="Vegetables" alt="Vegetables">
+          </td>
+          <td ng-show="details.Honey">
+            <img src="img/icons/123.png" title="Honey" alt="Honey">
+          </td>
+          <td ng-show="details.Jams">
+            <img src="img/icons/178.png" title="Jams" alt="Jams">
+          </td>
+          <td ng-show="details.Maple">
+            <img src="img/icons/maple.png" title="Maple" alt="Maple">
+          </td>
+          <td ng-show="details.Meat">
+            <img src="img/icons/71.png" title="Meat" alt="Meat">
+          </td>
+          <td ng-show="details.Nursery">
+            <img src="img/icons/nursery.png" title="Nursery" alt="Nursery">
+          </td>
+          <td ng-show="details.Nuts">
+            <img src="img/icons/nuts.png" title="Nuts" alt="Nuts">
+          </td>
+          <td ng-show="details.Plants">
+            <img src="img/icons/51.png" title="Plants" alt="Plants">
+          </td>
+          <td ng-show="details.Poultry">
+            <img src="img/icons/126.png" title="Poultry" alt="Poultry">
+          </td>
+          <td ng-show="details.Prepared">
+            <img src="img/icons/161.png" title="Prepared" alt="Prepared">
+          </td>
+          <td ng-show="details.Soap">
+            <img src="img/icons/soap.png" title="Soap" alt="Soap">
+          </td>
+          <td ng-show="details.Trees">
+            <img src="img/icons/trees.png" title="Trees" alt="Trees">
+          </td>
+          <td ng-show="details.Wine">
+            <img src="img/icons/199.png" title="Wine" alt="Wine">
+          </td>
+        </tr>
+        </tbody>
+        </table>
+        <table class="table" ng-show="details">
+        <h4 ng-show="details.Credit || details.SFMNP || details.SNAP || details.WIC || details.WICcash">Payments Accepted</h4>
+        <thead>
+        <tr>
+          <th ng-show="details.Credit">
+             Credit
+          </th>
+          <th ng-show="details.SFMNP">
+             Senior Farmers' Market Nutrition Program
+          </th>
+          <th ng-show="details.SNAP">
+             Supplemental Nutrition Assistance Program
+          </th>
+          <th ng-show="details.WIC">
+             Women, Infants, and Children
+          </th>
+          <th ng-show="details.WICcash">
+             Women, Infants, and Children Cash
+          </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td ng-show="details.SFMNP">
+            <img src="img/icons/SFMNP.png" width=64 height=64 title="SFMNP" alt="SFMNP">
+          </td>
+          <td ng-show="details.SNAP">
+            <img src="img/icons/SNAP.jpg" width=64 height=64 title="SNAP" alt="SNAP">
+          </td>
+          <td ng-show="details.WIC">
+            <img src="img/icons/WIC.jpg" width=64 height=64 title="WIC" alt="WIC">
+          </td>
+          <td ng-show="details.WICcash">
+            <img src="img/icons/WICcash.png" width=64 height=64 title="WICcash" alt="WICcash">
+          </td>
+          <td ng-show="details.Credit">
+            <img src="img/icons/CREDIT.jpg" width=64 height=64 title="credit" alt="credit">
+          </td>
+        </tr>
+        </tbody>
+        </table>
+  </div>
+</div>
+<!-- AngularJS -->
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.13/angular.min.js"></script>
+<script src="js/app.js"></script>
+<!-- Bootstrap core JavaScript
     ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="lib/jquery-1.10.2.min.js"></script>
-    <script src="lib/bootstrap-3.0.0/dist/js/bootstrap.min.js"></script>
-
-    <!-- Google Earth API -->
-	<script type="text/javascript" src="https://www.google.com/jsapi"></script>   
-    <script type="text/javascript">
-        google.load("earth", "1", {"other_params":"sensor=true_or_false"});
-        google.load('visualization', '1.0', {'packages':['corechart']});    
-    </script>
-    <!-- Loading Data into Google Earth -->
-    <script src="js/controllers.js"></script>
-  </body>
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="lib/jquery-1.10.2.min.js"></script>
+<!-- Latest compiled and minified JavaScript -->
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<!-- Bootstrap UI -->
+<script src="lib/ui-bootstrap-tpls-0.10.0.min.js"></script>
+<!-- Loading Data into Google Maps API -->
+<script src="js/controllers.js"></script>
+<!-- Google Visualization API -->
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+  google.load("visualization", "1", {packages:["corechart"]});
+</script>
+</body>
 </html>
